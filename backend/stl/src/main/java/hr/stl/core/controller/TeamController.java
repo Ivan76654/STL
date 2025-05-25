@@ -56,7 +56,7 @@ public class TeamController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Void> updateTeamById(@PathVariable Long id, @RequestBody TeamDto teamDto) {
+    public ResponseEntity<?> updateTeamById(@PathVariable Long id, @RequestBody TeamDto teamDto) {
         try {
             teamService.updateTeamById(id, teamDto);
 
@@ -67,7 +67,7 @@ public class TeamController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTeamById(@PathVariable Long id) {
+    public ResponseEntity<?> deleteTeamById(@PathVariable Long id) {
         try {
             teamService.deleteTeamById(id);
 
