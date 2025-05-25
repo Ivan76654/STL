@@ -20,9 +20,9 @@ public class PlayerRepository {
 
     public List<Player> getAllPlayers() {
         String sql = """
-                SELECT p.user_id, p.first_name, p.last_name, p.address, p.email, p.password, p.role,
-                    pl.rating, pl.registered_on, pl.date_of_birth, pl.team_id
-                FROM person p JOIN player pl ON p.user_id = pl.user_id
+                SELECT p.userId, p.firstName, p.lastName, p.address, p.email, p.password, p.role,
+                    pl.rating, pl.registeredOn, pl.dateOfBirth, pl.teamId
+                FROM person p JOIN player pl ON p.userId = pl.userId
                 """;
         MapSqlParameterSource params = new MapSqlParameterSource();
 
@@ -31,10 +31,10 @@ public class PlayerRepository {
 
     public Optional<Player> getPlayerById(Long id) {
         String sql = """
-                    SELECT p.user_id, p.first_name, p.last_name, p.address, p.email, p.password, p.role,
-                        pl.rating, pl.registered_on, pl.date_of_birth, pl.team_id
-                    FROM person p JOIN player pl ON p.user_id = pl.user_id
-                    WHERE p.user_id = :id;
+                    SELECT p.userId, p.firstName, p.lastName, p.address, p.email, p.password, p.role,
+                        pl.rating, pl.registeredOn, pl.dateOfBirth, pl.teamId
+                    FROM person p JOIN player pl ON p.userId = pl.userId
+                    WHERE p.userId = :id;
                 """;
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("id", id);
@@ -48,9 +48,9 @@ public class PlayerRepository {
     public Player insertPlayer(Player player) {
         String sql = """
                 INSERT INTO person
-                    (first_name, last_name, address, email, password, role)
+                    (firstName, lastName, address, email, password, role)
                 VALUES (:firstName, :lastName, :address, :email, :password, :role)
-                RETURNING user_id
+                RETURNING userId
                 """;
 
         MapSqlParameterSource personParams = new MapSqlParameterSource();
@@ -66,7 +66,7 @@ public class PlayerRepository {
 
         sql = """
                    INSERT INTO player
-                       (user_id, rating, registered_on, date_of_birth, team_id)
+                       (userId, rating, registeredOn, dateOfBirth, teamId)
                    VALUES (:userId, :rating, :registeredOn, :dateOfBirth, :teamId)
                 """;
 
@@ -86,13 +86,13 @@ public class PlayerRepository {
     public boolean updatePlayerById(Player player) {
         String sql = """
                 UPDATE person SET
-                    first_name = :firstName,
-                    last_name = :lastName,
+                    firstName = :firstName,
+                    lastName = :lastName,
                     address = :address,
                     email = :email,
                     password = :password,
                     role = :role
-                WHERE user_id = :id;
+                WHERE userId = :id;
                 """;
         MapSqlParameterSource personParams = new MapSqlParameterSource();
         personParams.addValue("id", player.getUserId());
@@ -109,10 +109,10 @@ public class PlayerRepository {
         sql = """
                 UPDATE player SET
                     rating = :rating,
-                    registered_on = :registeredOn,
-                    date_of_birth = :dateOfBirth,
-                    team_id = :teamId
-                WHERE user_id = :id;
+                    registeredOn = :registeredOn,
+                    dateOfBirth = :dateOfBirth,
+                    teamId = :teamId
+                WHERE userId = :id;
                 """;
 
         MapSqlParameterSource playerParams = new MapSqlParameterSource();
@@ -127,13 +127,13 @@ public class PlayerRepository {
 
     @Transactional
     public boolean deletePlayerById(Long id) {
-        String sql = "DELETE FROM player WHERE user_id = :id";
+        String sql = "DELETE FROM player WHERE userId = :id";
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("id", id);
 
         if (!(jdbc.update(sql, params) > 0)) return false;
 
-        sql = "DELETE FROM person WHERE user_id = :id";
+        sql = "DELETE FROM person WHERE userId = :id";
 
         return jdbc.update(sql, params) > 0;
     }
@@ -141,17 +141,17 @@ public class PlayerRepository {
     private final RowMapper<Player> PLAYER_ROW_MAPPER = (rs, rowNum) -> {
         Player p = new Player();
 
-        p.setUserId(rs.getLong("user_id"));
-        p.setFirstName(rs.getString("first_name"));
-        p.setLastName(rs.getString("last_name"));
+        p.setUserId(rs.getLong("userId"));
+        p.setFirstName(rs.getString("firstName"));
+        p.setLastName(rs.getString("lastName"));
         p.setAddress(rs.getString("address"));
         p.setEmail(rs.getString("email"));
         p.setPassword(rs.getString("password"));
         p.setRole(rs.getString("role"));
         p.setRating(rs.getInt("rating"));
-        p.setRegisteredOn(rs.getObject("registered_on", LocalDate.class));
-        p.setDateOfBirth(rs.getObject("date_of_birth", LocalDate.class));
-        p.setTeamId(rs.getLong("team_id"));
+        p.setRegisteredOn(rs.getObject("registeredOn", LocalDate.class));
+        p.setDateOfBirth(rs.getObject("dateOfBirth", LocalDate.class));
+        p.setTeamId(rs.getLong("teamId"));
 
         return p;
     };

@@ -18,14 +18,14 @@ public class TeamRepository {
     private final NamedParameterJdbcTemplate jdbc;
 
     public List<Team> getAllTeams() {
-        String sql = "SELECT team_id, name, founded, league_id FROM team";
+        String sql = "SELECT teamId, name, founded, leagueId FROM team";
         MapSqlParameterSource params = new MapSqlParameterSource();
 
         return jdbc.query(sql, params, TEAM_ROW_MAPPER);
     }
 
     public Optional<Team> getTeamById(Long id) {
-        String sql = "SELECT team_id, name, founded, league_id FROM team WHERE team_id = :id";
+        String sql = "SELECT teamId, name, founded, leagueId FROM team WHERE teamId = :id";
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("id", id);
 
@@ -35,7 +35,7 @@ public class TeamRepository {
     }
 
     public Team insertTeam(Team team) {
-        String sql = "INSERT INTO team(name, founded, league_id) VALUES(:name, :founded, :leagueId) RETURNING team_id";
+        String sql = "INSERT INTO team(name, founded, leagueId) VALUES(:name, :founded, :leagueId) RETURNING teamId";
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("name", team.getName());
         params.addValue("founded", team.getFounded());
@@ -48,7 +48,7 @@ public class TeamRepository {
     }
 
     public boolean updateTeamById(Team team) {
-        String sql = "UPDATE team SET name = :name, founded = :founded, league_id = :leagueId WHERE team_id = :id";
+        String sql = "UPDATE team SET name = :name, founded = :founded, leagueId = :leagueId WHERE teamId = :id";
         MapSqlParameterSource params = new MapSqlParameterSource();
 
         params.addValue("name", team.getName());
@@ -60,7 +60,7 @@ public class TeamRepository {
     }
 
     public boolean deleteTeamById(Long id) {
-        String sql = "DELETE FROM team WHERE team_id = :id";
+        String sql = "DELETE FROM team WHERE teamId = :id";
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("id", id);
 
@@ -71,10 +71,10 @@ public class TeamRepository {
     private final RowMapper<Team> TEAM_ROW_MAPPER = (rs, rowNum) -> {
         Team team = new Team();
 
-        team.setTeamId(rs.getLong("team_id"));
+        team.setTeamId(rs.getLong("teamId"));
         team.setName(rs.getString("name"));
         team.setFounded(rs.getObject("founded", LocalDate.class));
-        team.setLeagueId(rs.getLong("league_id"));
+        team.setLeagueId(rs.getLong("leagueId"));
 
         return team;
     };
