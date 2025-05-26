@@ -192,8 +192,22 @@ export default function TeamList() {
     setError("");
   };
 
-  const handleRemovePlayer = (id) => {
-    setFormTeam((prev) => ({ ...prev, players: prev.players.filter((p) => p.id !== id) }));
+  const handleRemovePlayer = async (playerId) => {
+    const confirm = window.confirm("Are you sure you want to delete this player?");
+    if (!confirm) return;
+    try {
+      await fetch(`http://localhost:8080/players/${playerId}`, {
+        method: "DELETE",
+      });
+
+      setFormTeam((prev) => ({
+        ...prev,
+        players: prev.players.filter((p) => p.id !== playerId),
+      }));
+    } catch (err) {
+      console.error("Error deleting player:", err);
+      setError("Error deleting player");
+    }
   };
 
   const handleEditPlayer = (player) => {
