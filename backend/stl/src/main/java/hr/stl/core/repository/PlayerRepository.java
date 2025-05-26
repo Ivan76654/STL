@@ -125,15 +125,10 @@ public class PlayerRepository {
         return jdbc.update(sql, playerParams) > 0;
     }
 
-    @Transactional
     public boolean deletePlayerById(Long id) {
-        String sql = "DELETE FROM player WHERE userId = :id";
+        String sql = "DELETE FROM person WHERE userId = :id";
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("id", id);
-
-        if (!(jdbc.update(sql, params) > 0)) return false;
-
-        sql = "DELETE FROM person WHERE userId = :id";
 
         return jdbc.update(sql, params) > 0;
     }
