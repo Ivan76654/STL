@@ -209,7 +209,7 @@ public class PlayerRepositoryTest {
 
         boolean actualDeletePlayerByIdResult = playerRepository.deletePlayerById(1L);
 
-        verify(namedParameterJdbcTemplate).update(eq("DELETE FROM player WHERE userId = :id"),
+        verify(namedParameterJdbcTemplate).update(eq("DELETE FROM person WHERE userId = :id"),
                 isA(SqlParameterSource.class));
         assertFalse(actualDeletePlayerByIdResult);
     }

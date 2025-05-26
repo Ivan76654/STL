@@ -15,6 +15,4 @@ public class League {
 
     private Integer rank;
 
-    private Long seasonId;
-
 }

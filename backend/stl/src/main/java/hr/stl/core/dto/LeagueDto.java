@@ -15,6 +15,4 @@ public class LeagueDto {
 
     private Integer rank;
 
-    private Long seasonId;
-
 }

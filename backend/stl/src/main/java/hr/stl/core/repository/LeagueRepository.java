@@ -17,14 +17,14 @@ public class LeagueRepository {
     private final NamedParameterJdbcTemplate jdbc;
 
     public List<League> getAllLeagues() {
-        String sql = "SELECT leagueId, description, rank, seasonId FROM league";
+        String sql = "SELECT leagueId, description, rank FROM league";
         MapSqlParameterSource params = new MapSqlParameterSource();
 
         return jdbc.query(sql, params, LEAGUE_ROW_MAPPER);
     }
 
     public Optional<League> getLeagueById(Long leagueId) {
-        String sql = "SELECT leagueId, description, rank, seasonId FROM league WHERE leagueId = :leagueId";
+        String sql = "SELECT leagueId, description, rank FROM league WHERE leagueId = :leagueId";
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("leagueId", leagueId);
 
@@ -34,11 +34,10 @@ public class LeagueRepository {
     }
 
     public League insertLeague(League league) {
-        String sql = "INSERT INTO league(description, rank, seasonId) VALUES (:description, :rank, :seasonId) RETURNING leagueId";
+        String sql = "INSERT INTO league(description, rank) VALUES (:description, :rank) RETURNING leagueId";
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("description", league.getDescription());
         params.addValue("rank", league.getRank());
-        params.addValue("seasonId", league.getSeasonId());
 
         Long leagueId = jdbc.queryForObject(sql, params, Long.class);
         league.setLeagueId(leagueId);
@@ -47,11 +46,11 @@ public class LeagueRepository {
     }
 
     public boolean updateLeagueById(League league) {
-        String sql = "UPDATE league SET description = :description, rank = :rank, seasonId = :seasonId WHERE leagueId = :leagueId";
+        String sql = "UPDATE league SET description = :description, rank = :rank WHERE leagueId = :leagueId";
         MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("leagueId", league.getLeagueId());
         params.addValue("description", league.getDescription());
         params.addValue("rank", league.getRank());
-        params.addValue("seasonId", league.getSeasonId());
 
         return jdbc.update(sql, params) > 0;
     }
@@ -70,7 +69,6 @@ public class LeagueRepository {
         league.setLeagueId(rs.getLong("leagueId"));
         league.setDescription(rs.getString("description"));
         league.setRank(rs.getInt("rank"));
-        league.setSeasonId(rs.getLong("seasonId"));
 
         return league;
     };

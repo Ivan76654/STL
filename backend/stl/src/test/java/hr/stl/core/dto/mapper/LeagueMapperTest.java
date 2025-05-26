@@ -24,13 +24,11 @@ public class LeagueMapperTest {
         league.setLeagueId(1L);
         league.setDescription("League");
         league.setRank(1);
-        league.setSeasonId(1L);
 
         leagueDto = new LeagueDto();
         leagueDto.setLeagueId(1L);
         leagueDto.setDescription("League");
         leagueDto.setRank(1);
-        leagueDto.setSeasonId(1L);
     }
 
     @Test
@@ -41,7 +39,6 @@ public class LeagueMapperTest {
         assertThat(mappedLeague.getLeagueId()).isEqualTo(league.getLeagueId());
         assertThat(mappedLeague.getDescription()).isEqualTo(league.getDescription());
         assertThat(mappedLeague.getRank()).isEqualTo(league.getRank());
-        assertThat(mappedLeague.getSeasonId()).isEqualTo(league.getSeasonId());
     }
 
     @Test
@@ -52,7 +49,6 @@ public class LeagueMapperTest {
         assertThat(mappedLeague.getLeagueId()).isEqualTo(leagueDto.getLeagueId());
         assertThat(mappedLeague.getDescription()).isEqualTo(leagueDto.getDescription());
         assertThat(mappedLeague.getRank()).isEqualTo(leagueDto.getRank());
-        assertThat(mappedLeague.getSeasonId()).isEqualTo(leagueDto.getSeasonId());
     }
 
 }
