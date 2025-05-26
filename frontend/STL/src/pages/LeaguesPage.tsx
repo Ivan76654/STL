@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -10,33 +10,41 @@ import {
   TextField,
   Button,
   Typography,
-  Stack,
   Alert,
-  AppBar,
-  Toolbar,
   IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
 } from "@mui/material";
-import { Link } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Header from "../components/Header";
 
 export default function LeaguesPage() {
-  const [leagues, setLeagues] = useState([
-    { id: 1, name: "Zagrebačka Liga" },
-    { id: 2, name: "Splitska Liga" },
-  ]);
+  const [leagues, setLeagues] = useState([]);
+
+  async function loadData() {
+    try {
+      const leagueRes = await fetch("http://localhost:8080/leagues");
+      const leagueData = await leagueRes.json();
+      setLeagues(leagueData);
+
+
+      
+    } catch (err) {
+      console.error("Failed to load leagues:", err);
+    }
+  }
+  
 
   const [newLeagueName, setNewLeagueName] = useState("");
+  const [newLeagueRank, setNewLeagueRank] = useState(null);
   const [editingLeagueId, setEditingLeagueId] = useState(null);
   const [error, setError] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const handleAddLeague = () => {
+  const handleAddLeague = async () => {
     if (!newLeagueName.trim()) {
       setError("League name is required.");
       return;
@@ -44,43 +52,72 @@ export default function LeaguesPage() {
     if (
       leagues.some(
         (l) =>
-          l.name.toLowerCase() === newLeagueName.trim().toLowerCase() &&
-          l.id !== editingLeagueId
+          l.description.toLowerCase() === newLeagueName.trim().toLowerCase() &&
+          l.leagueId !== editingLeagueId
       )
     ) {
       setError("League with that name already exists.");
       return;
     }
 
-    if (editingLeagueId) {
-      setLeagues((prev) =>
-        prev.map((l) =>
-          l.id === editingLeagueId ? { ...l, name: newLeagueName.trim() } : l
-        )
-      );
-    } else {
-      setLeagues((prev) => [
-        ...prev,
-        { id: Date.now(), name: newLeagueName.trim() },
-      ]);
-    }
+  if (editingLeagueId) {
+    await fetch(`http://localhost:8080/leagues/${editingLeagueId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ description: newLeagueName.trim(), rank: newLeagueRank }),
+    });
+  } else {
+    await fetch("http://localhost:8080/leagues", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ description: newLeagueName.trim(), rank: newLeagueRank }),
+    });
+  }
+
+await loadData();
 
     setNewLeagueName("");
+    setNewLeagueRank(null);
     setEditingLeagueId(null);
     setDialogOpen(false);
     setError("");
   };
 
-  const handleDelete = (id) => {
-    setLeagues((prev) => prev.filter((l) => l.id !== id));
-  };
+  const handleDelete = async (id) => {
+  const confirm = window.confirm("Are you sure you want to delete this league?");
+  if (!confirm) return;
+
+  try {
+    await fetch(`http://localhost:8080/leagues/${id}`, {
+      method: "DELETE",
+    });
+    await loadData();
+  } catch (err) {
+    console.error(err);
+    setError("Error deleting team");
+  }
+};
 
   const handleEdit = (league) => {
-    setNewLeagueName(league.name);
-    setEditingLeagueId(league.id);
+    setNewLeagueName(league.description);
+    setNewLeagueRank(league.rank);
+    setEditingLeagueId(league.leagueId);
     setError("");
     setDialogOpen(true);
   };
+
+    const closeDialog = () => {
+    setNewLeagueName("");
+    setNewLeagueRank(null);
+    setEditingLeagueId(null);
+    setDialogOpen(false);
+    setError("");
+  };
+
+  useEffect(() => {
+  
+    loadData();
+  }, []);
 
   return (
     <div>
@@ -89,11 +126,6 @@ export default function LeaguesPage() {
         <Typography variant="h5" color="black" gutterBottom>Leagues</Typography>
 
         <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "16px" }}>
-          <TextField
-            label="New League Name"
-            value={newLeagueName}
-            onChange={(e) => setNewLeagueName(e.target.value)}
-          />
           <Button variant="contained" onClick={() => {
             setEditingLeagueId(null);
             setDialogOpen(true);
@@ -114,12 +146,12 @@ export default function LeaguesPage() {
             </TableHead>
             <TableBody>
               {leagues.map((league) => (
-                <TableRow key={league.id}>
-                  <TableCell>{league.id}</TableCell>
-                  <TableCell>{league.name}</TableCell>
+                <TableRow key={league.leagueId}>
+                  <TableCell>{league.leagueId}</TableCell>
+                  <TableCell>{league.description}</TableCell>
                   <TableCell align="right">
                     <IconButton onClick={() => handleEdit(league)}><EditIcon /></IconButton>
-                    <IconButton onClick={() => handleDelete(league.id)} color="error"><DeleteIcon /></IconButton>
+                    <IconButton onClick={() => handleDelete(league.leagueId)} color="error"><DeleteIcon /></IconButton>
                   </TableCell>
                 </TableRow>
               ))}
@@ -140,9 +172,18 @@ export default function LeaguesPage() {
             onChange={(e) => setNewLeagueName(e.target.value)}
             margin="dense"
           />
+          <TextField
+            autoFocus
+            fullWidth
+            label="League Rank"
+            value={newLeagueRank}
+            type="number"
+            onChange={(e) => setNewLeagueRank(e.target.value)}
+            margin="dense"
+          />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+          <Button onClick={closeDialog}>Cancel</Button>
           <Button onClick={handleAddLeague} variant="contained">
             {editingLeagueId ? "Update" : "Add"}
           </Button>

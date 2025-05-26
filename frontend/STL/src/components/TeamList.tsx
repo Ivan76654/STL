@@ -40,6 +40,7 @@ function formatDate([year, month, day]) {
 export default function TeamList() {
   const [teams, setTeams] = useState([]);
   const [players, setPlayers] = useState([]);
+  const [leagues, setLeagues] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -206,14 +207,18 @@ const filteredTeams = teams.filter((t) => {
   return matchLeague && matchSearch;
 });
 
-  const getLeagueName = (id) => dummyLeagues.find((l) => l.id === id)?.name || "Unknown";
+  const getLeagueName = (id) => leagues.find((l) => l.leagueId === id)?.description || "Unknown";
 
   async function loadData() {
     try {
       const teamRes = await fetch("http://localhost:8080/teams");
       const playerRes = await fetch("http://localhost:8080/players");
+      const leagueRes = await fetch("http://localhost:8080/leagues");
       const teamData = await teamRes.json();
       const playerData = await playerRes.json();
+      const leagueData = await leagueRes.json();
+      setLeagues(leagueData);
+
 
       const teamsWithPlayers = teamData.map((team) => ({
         id: team.teamId,
@@ -274,8 +279,8 @@ const filteredTeams = teams.filter((t) => {
           <InputLabel>Filter by League</InputLabel>
           <Select sx={{ mb: 2 }} value={leagueFilter} onChange={(e) => setLeagueFilter(e.target.value)} label="Filter by League">
             <MenuItem value="">All</MenuItem>
-            {dummyLeagues.map((l) => (
-              <MenuItem key={l.id} value={l.id}>{l.name}</MenuItem>
+            {leagues.map((l) => (
+              <MenuItem key={l.id} value={l.leagueId}>{l.description}</MenuItem>
             ))}
           </Select>
           <TextField
@@ -364,8 +369,8 @@ const filteredTeams = teams.filter((t) => {
       value={formTeam.leagueId}
       onChange={(e) => setFormTeam({ ...formTeam, leagueId: parseInt(e.target.value) })}
     >
-      {dummyLeagues.map((l) => (
-        <MenuItem key={l.id} value={l.id}>{l.name}</MenuItem>
+      {leagues.map((l) => (
+        <MenuItem key={l.leagueId} value={l.leagueId}>{l.description}</MenuItem>
       ))}
     </TextField>
 
