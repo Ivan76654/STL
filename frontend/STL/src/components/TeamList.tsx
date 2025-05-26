@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   AppBar,
   Toolbar,
@@ -33,37 +33,20 @@ const dummyLeagues = [
   { id: 2, name: "Splitska Liga" },
 ];
 
-const dummyTeams = [
-  {
-    id: 1,
-    name: "Smash Bros",
-    founded: "2020-01-01",
-    leagueId: 1,
-    players: [
-      {
-        id: 1,
-        firstName: "Marko",
-        lastName: "Horvat",
-        address: "Street 1",
-        email: "marko@email.com",
-        password: "123456",
-        rating: 1200,
-        registeredOn: "2020-01-01",
-        dateOfBirth: "2000-01-01",
-      },
-    ],
-  },
-];
+function formatDate([year, month, day]) {
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
 
 export default function TeamList() {
-  const [teams, setTeams] = useState(dummyTeams);
+  const [teams, setTeams] = useState([]);
+  const [players, setPlayers] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [formTeam, setFormTeam] = useState({ id: null, name: "", founded: "", leagueId: "", players: [] });
   const [formPlayer, setFormPlayer] = useState({
-    id: null,
+    userId: null,
     firstName: "",
     lastName: "",
     address: "",
@@ -76,10 +59,6 @@ export default function TeamList() {
   const [editPlayerId, setEditPlayerId] = useState(null);
   const [error, setError] = useState("");
   const [leagueFilter, setLeagueFilter] = useState("");
-
-  const handleDelete = (id) => {
-    setTeams((prev) => prev.filter((team) => team.id !== id));
-  };
 
   const handleView = (team) => {
     setSelectedTeam(team);
@@ -104,7 +83,7 @@ export default function TeamList() {
 
   const resetForm = () => {
     setFormTeam({ id: null, name: "", founded: "", leagueId: "", players: [] });
-    setFormPlayer({ id: null, firstName: "", lastName: "", address: "", email: "", password: "", rating: "", registeredOn: "", dateOfBirth: "" });
+    setFormPlayer({ userId: null, firstName: "", lastName: "", address: "", email: "", password: "", rating: "", registeredOn: "", dateOfBirth: "" });
     setEditPlayerId(null);
     setError("");
   };
@@ -112,7 +91,7 @@ export default function TeamList() {
   const isEmailValid = (email) => /\S+@\S+\.\S+/.test(email);
   const isPastDate = (date) => new Date(date) <= new Date();
 
-  const handleFormSubmit = () => {
+  const handleFormSubmit = async () => {
     if (!formTeam.name.trim() || !formTeam.founded || !formTeam.leagueId) {
       setError("Team name, founded date, and league are required.");
       return;
@@ -125,13 +104,74 @@ export default function TeamList() {
       setError("Team must have at least one player.");
       return;
     }
-    setTeams((prev) => {
-      const updated = formTeam.id
-        ? prev.map((t) => (t.id === formTeam.id ? formTeam : t))
-        : [...prev, { ...formTeam, id: Date.now() }];
-      return updated;
-    });
-    handleFormClose();
+    try {
+      console.log(formTeam.id)
+      const payload = {
+        name: formTeam.name,
+        founded: formTeam.founded,
+        leagueId: parseInt(formTeam.leagueId),
+      };
+      if (formTeam.id) {
+        await fetch(`http://localhost:8080/teams/${formTeam.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        for (const p of formTeam.players) {
+          const playerPayload = {
+            ...p,
+            rating: parseInt(p.rating),
+            role: "PLAYER",
+            teamId: formTeam.id,
+          };
+
+          if (p.id) {
+            await fetch(`http://localhost:8080/players/${p.id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(playerPayload),
+            });
+          } else {
+            await fetch("http://localhost:8080/players", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(playerPayload),
+            });
+          }
+        }
+      } else {
+        const res = await fetch("http://localhost:8080/teams", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const saved = await res.json();
+        const teamId = saved.teamId;
+
+        for (const p of formTeam.players) {
+          const playerPayload = {
+            ...p,
+            rating: parseInt(p.rating),
+            role: "PLAYER",
+            teamId: teamId,
+          };
+
+          await fetch("http://localhost:8080/players", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(playerPayload),
+          });
+        }
+      }
+      handleFormClose();
+      await loadData();  
+    } catch (err) {
+      console.error(err);
+      setError("Error saving team");
+    }
+    
   };
 
   const handleAddOrEditPlayer = () => {
@@ -167,6 +207,62 @@ const filteredTeams = teams.filter((t) => {
 });
 
   const getLeagueName = (id) => dummyLeagues.find((l) => l.id === id)?.name || "Unknown";
+
+  async function loadData() {
+    try {
+      const teamRes = await fetch("http://localhost:8080/teams");
+      const playerRes = await fetch("http://localhost:8080/players");
+      const teamData = await teamRes.json();
+      const playerData = await playerRes.json();
+
+      const teamsWithPlayers = teamData.map((team) => ({
+        id: team.teamId,
+        name: team.name,
+        founded: formatDate(team.founded),
+        leagueId: team.leagueId,
+        players: playerData
+          .filter((p) => p.teamId === team.teamId)
+          .map((p) => ({
+            id: p.userId,
+            firstName: p.firstName,
+            lastName: p.lastName,
+            email: p.email,
+            address: p.address,
+            password: p.password,
+            rating: p.rating,
+            registeredOn: formatDate(p.registeredOn),
+            dateOfBirth: formatDate(p.dateOfBirth),
+          })),
+      }));
+
+      setTeams(teamsWithPlayers);
+      setPlayers(playerData);
+    } catch (err) {
+      console.error("Failed to load teams or players:", err);
+    }
+  }
+  const handleDelete = async (id) => {
+  const confirm = window.confirm("Are you sure you want to delete this team?");
+  if (!confirm) return;
+
+  try {
+    await fetch(`http://localhost:8080/teams/${id}`, {
+      method: "DELETE",
+    });
+    await loadData();
+  } catch (err) {
+    console.error(err);
+    setError("Error deleting team");
+  }
+};
+
+
+
+  useEffect(() => {
+
+  loadData();
+}, []);
+
 
   return (
     <div>
