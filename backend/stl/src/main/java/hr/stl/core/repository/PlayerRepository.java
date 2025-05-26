@@ -116,7 +116,7 @@ public class PlayerRepository {
                 """;
 
         MapSqlParameterSource playerParams = new MapSqlParameterSource();
-        playerParams.addValue("userId", player.getUserId());
+        playerParams.addValue("id", player.getUserId());
         playerParams.addValue("rating", player.getRating());
         playerParams.addValue("registeredOn", player.getRegisteredOn());
         playerParams.addValue("dateOfBirth", player.getDateOfBirth());
